@@ -39,20 +39,26 @@ runs:
           echo "::endgroup::"
 
           echo "::group::Pull Manala CI container from local registry if available"
-            docker pull localhost:5000/manala_ci || true
+            docker pull localhost:5000/manala_ci && image_found=true || image_found=false
           echo "::endgroup::"
 
-          echo "::group::Build Manala CI container"
-            docker build .manala \
-              --tag manala_ci \
-              --cache-from=localhost:5000/manala_ci \
-              --build-arg UID=$(id -u) \
-              --build-arg GID=$(id -g)
-          echo "::endgroup::"
+          if [ $image_found == true ]; then
+            echo "::group::Reuse Manala CI image found from local registry"
+              docker tag localhost:5000/manala_ci manala_ci
+            echo "::endgroup::"
+          else
+            echo "::group::Build Manala CI container"
+              docker build .manala \
+                --tag manala_ci \
+                --cache-from=localhost:5000/manala_ci \
+                --build-arg UID=$(id -u) \
+                --build-arg GID=$(id -g)
+            echo "::endgroup::"
 
-          echo "::group::Tag Manala CI container to local registry for later reuse"
-            docker tag manala_ci localhost:5000/manala_ci && docker push localhost:5000/manala_ci || true
-          echo "::endgroup::"
+            echo "::group::Tag Manala CI container to local registry for later reuse"
+              docker tag manala_ci localhost:5000/manala_ci && docker push localhost:5000/manala_ci || true
+            echo "::endgroup::"
+          fi
         );
 
         echo "::group::Run services if not already up"
