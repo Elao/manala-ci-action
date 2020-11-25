@@ -40,7 +40,7 @@ steps:
   # [...]
 
   - name: 'Run tests'
-    uses: Elao/manala-ci-action@master
+    uses: Elao/manala-ci-action@main
     with:
       cmd: make test@integration
 ```
@@ -57,12 +57,12 @@ steps:
   # [...]
 
   - name: 'Setup container with Manala'
-    uses: Elao/manala-ci-action@master
+    uses: Elao/manala-ci-action@main
 
   # [...]
 
   - name: 'Run tests'
-    uses: Elao/manala-ci-action@master
+    uses: Elao/manala-ci-action@main
     with:
       cmd: make test@integration
 ```
@@ -84,7 +84,7 @@ steps:
       key: manala-ci-${{ hashFiles('.manala/**') }}
 
   - name: 'Setup container with Manala'
-    uses: Elao/manala-ci-action@master
+    uses: Elao/manala-ci-action@main
 ```
 
 ### Example workflow
@@ -168,11 +168,11 @@ jobs:
           key: yarn-${{ secrets.CACHE_VERSION }}-${{ hashFiles('yarn.lock') }}
 
       - name: 'Setup container with Manala'
-        uses: Elao/manala-ci-action@master
+        uses: Elao/manala-ci-action@main
         timeout-minutes: 6
 
       - name: 'Install dependencies & setup project'
-        uses: Elao/manala-ci-action@master
+        uses: Elao/manala-ci-action@main
         timeout-minutes: 3
         with:
           cmd: |
@@ -185,7 +185,7 @@ jobs:
             echo "::endgroup::"
 
       - name: 'Run tests'
-        uses: Elao/manala-ci-action@master
+        uses: Elao/manala-ci-action@main
         timeout-minutes: 5
         with:
           cmd: make test.phpunit@integration
