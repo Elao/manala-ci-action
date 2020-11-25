@@ -1,4 +1,4 @@
-name: Manala CI
+name: Manala CI for "elao.app" recipe
 description: 'Provision & run commands inside a Manala CI environment with "elao.app" recipe'
 author: Elao
 
