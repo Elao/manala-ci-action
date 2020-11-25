@@ -1,5 +1,10 @@
 name: Manala CI
 description: 'Provision & run commands inside a Manala CI environment with "elao.app" recipe'
+author: Elao
+
+branding:
+  icon: 'terminal'
+  color: 'orange'
 
 inputs:
   cmd:
