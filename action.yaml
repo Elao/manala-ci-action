@@ -1,0 +1,84 @@
+name: Manala CI
+description: 'Provision & run commands inside a Manala CI environment with "elao.app" recipe'
+
+inputs:
+  cmd:
+    description: 'Command to execute'
+    required: false
+    default: 'echo "Manala CI environment setup is done and ready to run your commands!"'
+
+  working-directory:
+    description: 'Working dir for the command, relative to your workspace dir'
+    required: false
+
+  docker-compose-file:
+    description: 'The docker-compose.yaml file used to start services'
+    required: false
+    default: '.manala/github/docker-compose.yaml'
+
+runs:
+  using: 'composite'
+  steps:
+
+    - name: 'Escape cmd shell script by dumping into an executable file'
+      shell: bash
+      run: |
+        echo "${{ inputs.cmd }}" > ${{ inputs.working-directory || github.workspace }}/manala_ci_cmd.sh
+        chmod +x ${{ inputs.working-directory || github.workspace }}/manala_ci_cmd.sh
+
+    - name: 'Prepare'
+      shell: bash
+      run: |
+        docker_compose="docker-compose --file ${{ inputs.docker-compose-file }}"
+
+        $docker_compose start registry 2> /dev/null || (\
+          echo "::group::Start the local registry if not already up"
+            mkdir -p ${{ runner.temp }}/docker-registry
+            $docker_compose up --detach registry
+            npx wait-on tcp:5000
+          echo "::endgroup::"
+
+          echo "::group::Pull Manala CI container from local registry if available"
+            docker pull localhost:5000/manala_ci || true
+          echo "::endgroup::"
+
+          echo "::group::Build Manala CI container"
+            docker build .manala \
+              --tag manala_ci \
+              --cache-from=localhost:5000/manala_ci \
+              --build-arg UID=$(id -u) \
+              --build-arg GID=$(id -g)
+          echo "::endgroup::"
+
+          echo "::group::Tag Manala CI container to local registry for later reuse"
+            docker tag manala_ci localhost:5000/manala_ci && docker push localhost:5000/manala_ci || true
+          echo "::endgroup::"
+        );
+
+        echo "::group::Run services if not already up"
+          [ -z "$SSH_AUTH_SOCK"] && touch ~/ssh-agent
+          $docker_compose up --detach
+          docker ps --all
+        echo "::endgroup::"
+
+    - name: 'Execute cmd in the Manala CI environment'
+      id: execute-cmd
+      shell: bash
+      env:
+        # "The input device is not a TTY" (this env var)
+        # "ValueError: I/O operation on closed file." (-T)
+        # See https://github.com/docker/compose/issues/5696
+        COMPOSE_INTERACTIVE_NO_CLI: '1'
+      run: |
+        docker_compose="docker-compose --file ${{ inputs.docker-compose-file }}"
+
+        $docker_compose \
+          exec \
+          -T \
+          -w /srv/app/${{ inputs.working-directory }} \
+          manala_ci \
+          bash -c "./manala_ci_cmd.sh"
+
+    - name: 'Clean'
+      shell: bash
+      run: rm ${{ inputs.working-directory || github.workspace }}/manala_ci_cmd.sh
