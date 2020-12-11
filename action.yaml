@@ -36,33 +36,9 @@ runs:
       run: |
         docker_compose="docker-compose --file ${{ inputs.docker-compose-file }}"
 
-        $docker_compose start registry 2> /dev/null || (\
-          echo "::group::Start the local registry if not already up"
-            mkdir -p ${{ runner.temp }}/docker-registry
-            $docker_compose up --detach registry
-            npx wait-on tcp:5000
-          echo "::endgroup::"
-
-          echo "::group::Pull Manala CI container from local registry if available"
-            docker pull localhost:5000/manala_ci || true
-          echo "::endgroup::"
-
-          echo "::group::Build Manala CI container"
-            docker build .manala \
-              --tag manala_ci \
-              --cache-from=localhost:5000/manala_ci \
-              --build-arg UID=$(id -u) \
-              --build-arg GID=$(id -g)
-          echo "::endgroup::"
-
-          echo "::group::Tag Manala CI container to local registry for later reuse"
-            docker tag manala_ci localhost:5000/manala_ci && docker push localhost:5000/manala_ci || true
-          echo "::endgroup::"
-        );
-
         echo "::group::Run services if not already up"
           [ -z "$SSH_AUTH_SOCK"] && touch ~/ssh-agent
-          $docker_compose up --detach
+          MANALA_CI_UID=$(id -u) MANALA_CI_GID=$(id -g) $docker_compose up --detach
           docker ps --all
         echo "::endgroup::"
 

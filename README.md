@@ -69,19 +69,19 @@ steps:
 
 ### Cache
 
-The container is build each time the action is called for the first time in a job.  
-In order to speed up this part, you can use [actions/cache](https://github.com/actions/cache):
+The container is built each time the action is called for the first time in a job.  
+In order to speed up this part, you can use [satackey/action-docker-layer-caching](https://github.com/satackey/action-docker-layer-caching):
 
 ```yaml
 steps:
 
   # [...]
 
-  - name: 'Cache Manala CI container using local registry'
-    uses: actions/cache@v2
+  - name: 'Cache Docker containers layers'
+    uses: satackey/action-docker-layer-caching@v0.0.10
     with:
-      path: ${{ runner.temp }}/docker-registry
-      key: manala-ci-${{ hashFiles('.manala/**') }}
+      key: docker-cache-{hash}
+      restore-keys: docker-cache-
 
   - name: 'Setup container with Manala'
     uses: Elao/manala-ci-action@main
@@ -91,9 +91,7 @@ steps:
 
 A concrete example for a Symfony app with:
 
-- **cache** for the Docker container built, allowing to speedup the workflow execution.
-  The cache key is computed based on the `.manala` directory files, so any change
-  that may impact the container will invalidate the cache.  
+- **cache** for the Docker container built, allowing to speedup the workflow execution.  
   Cache samples for Composer, simple-phpunit and Yarn/NPM are also included.  
   The `${{ secrets.CACHE_VERSION }}` can be configured in your project secrets, 
   allowing to invalidate cache easily on need.
@@ -141,12 +139,6 @@ jobs:
       - name: 'Checkout'
         uses: actions/checkout@v2
 
-      - name: 'Cache Manala CI container using local registry'
-        uses: actions/cache@v2
-        with:
-          path: ${{ runner.temp }}/docker-registry
-          key: manala-ci-${{ secrets.CACHE_VERSION }}-${{ hashFiles('.manala/**') }}
-
       - name: 'Cache composer dependencies'
         uses: actions/cache@v2
         with:
@@ -167,6 +159,12 @@ jobs:
             .manala/.cache/docker/npm
           key: yarn-${{ secrets.CACHE_VERSION }}-${{ hashFiles('yarn.lock') }}
 
+      - name: 'Cache Docker containers layers (including Manala CI)'
+        uses: satackey/action-docker-layer-caching@v0.0.10
+        with:
+          key: docker-cache-${{ secrets.CACHE_VERSION }}-{hash}
+          restore-keys: docker-cache-${{ secrets.CACHE_VERSION }}
+          
       - name: 'Setup container with Manala'
         uses: Elao/manala-ci-action@main
         timeout-minutes: 6
