@@ -160,7 +160,7 @@ jobs:
           key: yarn-${{ secrets.CACHE_VERSION }}-${{ hashFiles('yarn.lock') }}
 
       - name: 'Cache Docker containers layers (including Manala CI)'
-        uses: satackey/action-docker-layer-caching@v0.0.10
+        uses: satackey/action-docker-layer-caching@v0.0.11
         with:
           key: docker-cache-${{ secrets.CACHE_VERSION }}-{hash}
           restore-keys: docker-cache-${{ secrets.CACHE_VERSION }}
