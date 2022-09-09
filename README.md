@@ -1,3 +1,8 @@
+> **Warning**
+> This action is archived in favor of using:
+> 1. the new [elao.app.docker recipe](https://manala.github.io/manala-recipes/recipes/elao.app.docker/)
+> 1. the embedded recipe Github actions or [integration tasks config](https://manala.github.io/manala-recipes/recipes/elao.app.docker/#github-actions)
+
 # Manala CI Action
 
 This action provisions a Manala CI environment generated from the ["elao.app" recipe](https://manala.github.io/manala-recipes/recipes/elao.app/)
